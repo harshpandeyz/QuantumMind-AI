@@ -1,0 +1,48 @@
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-primary: #050a14;
+  --bg-secondary: #0a1628;
+  --bg-card: #0d1f3c;
+  --accent-primary: #00d4ff;
+  --accent-secondary: #7c3aed;
+  --accent-glow: rgba(0, 212, 255, 0.15);
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --border: rgba(0, 212, 255, 0.2);
+  --success: #10b981;
+  --error: #ef4444;
+  --warning: #f59e0b;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { min-height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Exo 2', sans-serif;
+}
+
+.quantum-grid {
+  background:
+    linear-gradient(rgba(0, 212, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 212, 255, 0.06) 1px, transparent 1px),
+    radial-gradient(circle at 20% 20%, rgba(0, 212, 255, 0.14), transparent 28%),
+    radial-gradient(circle at 80% 30%, rgba(124, 58, 237, 0.14), transparent 30%),
+    var(--bg-primary);
+  background-size: 40px 40px, 40px 40px, auto, auto;
+}
+
+.glass {
+  background: rgba(13, 31, 60, 0.86);
+  border: 1px solid var(--border);
+  box-shadow: 0 0 40px rgba(0, 212, 255, 0.08);
+}
+
+.scrollbar::-webkit-scrollbar { width: 8px; }
+.scrollbar::-webkit-scrollbar-thumb { background: rgba(0, 212, 255, 0.25); border-radius: 999px; }
