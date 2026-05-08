@@ -1,7 +1,15 @@
 import json
+import logging
 import os
+from typing import Dict, List
+
 import httpx
+from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
+
+from models.schemas import ChatRequest, ChatResponse
+from services.llm_service import chat_completion
+from services.rag_service import build_rag_prompt, search
 
 logger = logging.getLogger(__name__)
 
