@@ -1,0 +1,15 @@
+node_modules/
+.next/
+dist/
+build/
+target/
+venv/
+__pycache__/
+.pytest_cache/
+.idea/
+.vscode/
+.env
+*.log
+*.class
+*.jar
+coverage/
