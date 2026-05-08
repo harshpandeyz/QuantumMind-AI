@@ -7,25 +7,36 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
 @RequestMapping("/api/chat")
 @RequiredArgsConstructor
 public class ChatController {
     private final ChatService chatService;
-    private final java.util.concurrent.ConcurrentHashMap<String, io.github.bucket4j.Bucket> rateLimiters =
-        new java.util.concurrent.ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Deque<Instant>> rateLimiters = new ConcurrentHashMap<>();
     private final java.util.concurrent.ExecutorService streamExecutor =
         java.util.concurrent.Executors.newCachedThreadPool();
 
-    private io.github.bucket4j.Bucket getBucket(String userId) {
-        return rateLimiters.computeIfAbsent(userId, k ->
-            io.github.bucket4j.Bucket.builder()
-                .addLimit(io.github.bucket4j.Bandwidth.simple(30, java.time.Duration.ofMinutes(1)))
-                .build());
+    private boolean tryConsume(String userId) {
+        Instant cutoff = Instant.now().minusSeconds(60);
+        Deque<Instant> requests = rateLimiters.computeIfAbsent(userId, key -> new ArrayDeque<>());
+        synchronized (requests) {
+            while (!requests.isEmpty() && requests.peekFirst().isBefore(cutoff)) {
+                requests.removeFirst();
+            }
+            if (requests.size() >= 30) {
+                return false;
+            }
+            requests.addLast(Instant.now());
+            return true;
+        }
     }
 
     @PostMapping("/sessions")
@@ -46,7 +57,7 @@ public class ChatController {
     @PostMapping("/sessions/{id}/messages")
     public ChatResponse send(@PathVariable UUID id, @Valid @RequestBody ChatRequest request, Authentication authentication) {
         String userId = authentication.getName();
-        if (!getBucket(userId).tryConsume(1)) {
+        if (!tryConsume(userId)) {
             throw new com.quantummind.exception.CustomExceptions.RateLimitException(
                 "Rate limit exceeded: 30 messages per minute.");
         }
@@ -63,7 +74,7 @@ public class ChatController {
             Authentication authentication) {
 
         String userEmail = authentication.getName();
-        if (!getBucket(userEmail).tryConsume(1)) {
+        if (!tryConsume(userEmail)) {
             throw new com.quantummind.exception.CustomExceptions.RateLimitException(
                 "Rate limit exceeded: 30 messages per minute.");
         }
