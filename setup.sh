@@ -9,19 +9,17 @@ need() {
 }
 
 need java
-need mvn
 need python
 need node
 need npm
 
 java -version
-mvn -version
 python --version
 node --version
 
 mkdir -p backend/uploads ai-service/faiss_index
 
-(cd backend && mvn clean install -DskipTests)
+(cd backend && ./mvnw clean install -DskipTests)
 (cd ai-service && python -m venv venv && source venv/bin/activate && pip install -r requirements.txt)
 (cd frontend && npm install)
 

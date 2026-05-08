@@ -3,6 +3,8 @@ node_modules/
 dist/
 build/
 target/
+backend/.mvn/apache-maven-*/
+backend/.mvn/*.zip
 venv/
 __pycache__/
 .pytest_cache/

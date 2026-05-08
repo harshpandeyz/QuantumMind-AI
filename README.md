@@ -4,11 +4,13 @@ AI-Powered Multimodal Quantum Research Intelligence Platform
 
 ## Quick Start - Docker (Recommended)
 
-```bash
+PowerShell:
+
+```powershell
 git clone <your-repository-url>
 cd quantummind
-cp .env.example .env
-cp ai-service/.env.example ai-service/.env
+Copy-Item .env.example .env
+Copy-Item ai-service/.env.example ai-service/.env
 docker compose up --build
 ```
 
@@ -27,17 +29,67 @@ Open `http://localhost` and register at `http://localhost/register`.
 Prerequisites:
 
 - Java 17
-- Maven
-- Python 3.11
+- Python 3.10+ locally, or Python 3.11 in Docker
 - Node 20
 - PostgreSQL 16 with a `quantummind` database
 
-Run:
+Maven is provided by the backend wrapper, so a global `mvn` command is not required.
+
+PowerShell:
+
+```powershell
+.\setup.ps1
+.\start.ps1
+```
+
+CMD:
+
+```bat
+setup.bat
+start.bat
+```
+
+Bash-compatible shells:
 
 ```bash
 ./setup.sh
 ./start.sh
 ```
+
+Manual commands:
+
+Backend:
+
+```powershell
+cd backend
+.\mvnw.cmd spring-boot:run
+```
+
+AI service:
+
+```powershell
+cd ai-service
+python -m venv venv
+.\venv\Scripts\python.exe -m pip install -r requirements.txt
+.\venv\Scripts\python.exe -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
+
+Frontend:
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+The frontend stack is React 18 + Vite. This repo intentionally does not use Next.js.
+
+Legacy prerequisites for manual setup:
+
+- Java 17
+- Python 3.11
+- Node 20
+- PostgreSQL 16 with a `quantummind` database
 
 Local URLs:
 
@@ -118,17 +170,17 @@ FastAPI AI Service (:8000) ---- FAISS volume
 
 Backend:
 
-```bash
+```powershell
 cd backend
-mvn test
+.\mvnw.cmd test
 ```
 
 AI service:
 
-```bash
+```powershell
 cd ai-service
-pip install pytest
-pytest tests/ -v
+python -m pip install pytest
+python -m pytest tests/ -v
 ```
 
 ## Troubleshooting
@@ -140,4 +192,5 @@ pytest tests/ -v
 - Java OOM: already handled with `-Xmx512m` in `backend/Dockerfile`.
 
 ## License
-harsh
+
+MIT

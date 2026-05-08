@@ -29,23 +29,23 @@ Never hardcode secrets. Use:
 
 Backend:
 
-```bash
+```powershell
 cd backend
-mvn test
-mvn spring-boot:run
+.\mvnw.cmd test
+.\mvnw.cmd spring-boot:run
 ```
 
 AI service:
 
-```bash
+```powershell
 cd ai-service
 python -m pip install -r requirements.txt
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 Frontend:
 
-```bash
+```powershell
 cd frontend
 npm install
 npm run dev
@@ -53,9 +53,9 @@ npm run dev
 
 Docker:
 
-```bash
-cp .env.example .env
-cp ai-service/.env.example ai-service/.env
+```powershell
+Copy-Item .env.example .env
+Copy-Item ai-service/.env.example ai-service/.env
 docker compose up --build
 ```
 
@@ -64,4 +64,6 @@ docker compose up --build
 - Keep controllers thin; put business logic in services.
 - Keep backend DTOs aligned with frontend API helpers.
 - Keep AI service schemas in `ai-service/models/schemas.py`.
+- The frontend is React 18 + Vite. Do not add Next.js unless the architecture is intentionally changed everywhere.
+- On Windows, prefer `setup.ps1`, `start.ps1`, and `backend\mvnw.cmd`; do not assume Bash or a global Maven install.
 - Do not commit `node_modules`, `dist`, `target`, `__pycache__`, `.pytest_cache`, FAISS indexes, uploads, or local `.env` files.
