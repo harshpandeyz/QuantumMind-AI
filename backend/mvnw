@@ -1,0 +1,24 @@
+#!/usr/bin/env sh
+set -eu
+
+SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+PROPS="$SCRIPT_DIR/.mvn/wrapper/maven-wrapper.properties"
+MAVEN_HOME="$SCRIPT_DIR/.mvn/apache-maven-3.9.6"
+MAVEN_BIN="$MAVEN_HOME/bin/mvn"
+MAVEN_ZIP="$SCRIPT_DIR/.mvn/apache-maven-3.9.6-bin.zip"
+
+if [ ! -x "$MAVEN_BIN" ]; then
+  DISTRIBUTION_URL="$(sed -n 's/^distributionUrl=//p' "$PROPS")"
+  mkdir -p "$SCRIPT_DIR/.mvn"
+  if command -v curl >/dev/null 2>&1; then
+    curl -fsSL "$DISTRIBUTION_URL" -o "$MAVEN_ZIP"
+  elif command -v wget >/dev/null 2>&1; then
+    wget -q "$DISTRIBUTION_URL" -O "$MAVEN_ZIP"
+  else
+    echo "curl or wget is required to download Maven." >&2
+    exit 1
+  fi
+  unzip -q -o "$MAVEN_ZIP" -d "$SCRIPT_DIR/.mvn"
+fi
+
+exec "$MAVEN_BIN" "$@"
