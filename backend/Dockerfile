@@ -11,5 +11,5 @@ RUN apk add --no-cache curl
 WORKDIR /app
 COPY --from=build /build/target/*.jar app.jar
 RUN mkdir -p /app/uploads
-EXPOSE 8080
+EXPOSE 8085
 ENTRYPOINT ["java", "-Xmx512m", "-jar", "app.jar"]
