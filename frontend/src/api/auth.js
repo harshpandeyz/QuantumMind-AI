@@ -15,7 +15,9 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('qm_token')
-      if (!window.location.pathname.includes('/login')) window.location.href = '/login'
+      if (!window.location.pathname.includes('/login')) {
+        window.dispatchEvent(new CustomEvent('auth:unauthorized'))
+      }
     }
     return Promise.reject(error)
   }
