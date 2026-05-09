@@ -1,17 +1,53 @@
-node_modules/
-.next/
-dist/
-build/
+# Java build
 target/
-backend/.mvn/apache-maven-*/
-backend/.mvn/*.zip
-venv/
-__pycache__/
-.pytest_cache/
-.idea/
-.vscode/
-.env
-*.log
 *.class
 *.jar
+*.war
+
+# Maven wrapper cache (keep wrapper properties)
+.mvn/apache-maven-*/
+backend/.mvn/apache-maven-*/
+*.zip
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+.venv/
+*.whl
+.pytest_cache/
+
+# Node
+node_modules/
+dist/
+.cache/
+.next/
+build/
+
+# Environment files (NEVER commit secrets)
+.env
+ai-service/.env
+
+# IDE
+.vscode/settings.json
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
 coverage/
+
+# Upload data (user files)
+backend/uploads/
+ai-service/faiss_index/*.faiss
+
+# Keep these tracked:
+# .env.example
+# ai-service/.env.example
