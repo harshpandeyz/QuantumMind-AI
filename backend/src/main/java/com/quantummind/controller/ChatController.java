@@ -14,29 +14,55 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping("/api/chat")
 @RequiredArgsConstructor
 public class ChatController {
     private final ChatService chatService;
-    private final ConcurrentHashMap<String, Deque<Instant>> rateLimiters = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, RateLimiterState> rateLimiters = new ConcurrentHashMap<>();
     private final java.util.concurrent.ExecutorService streamExecutor =
-        java.util.concurrent.Executors.newCachedThreadPool();
+        new ThreadPoolExecutor(
+            10,
+            50,
+            60L,
+            TimeUnit.SECONDS,
+            new ArrayBlockingQueue<>(100),
+            new ThreadPoolExecutor.CallerRunsPolicy()
+        );
 
     private boolean tryConsume(String userId) {
-        Instant cutoff = Instant.now().minusSeconds(60);
-        Deque<Instant> requests = rateLimiters.computeIfAbsent(userId, key -> new ArrayDeque<>());
-        synchronized (requests) {
-            while (!requests.isEmpty() && requests.peekFirst().isBefore(cutoff)) {
-                requests.removeFirst();
+        Instant now = Instant.now();
+        cleanupRateLimiters(now);
+        Instant cutoff = now.minusSeconds(60);
+        RateLimiterState limiter = rateLimiters.computeIfAbsent(userId, key -> new RateLimiterState());
+        synchronized (limiter) {
+            limiter.lastAccess = now;
+            while (!limiter.requests.isEmpty() && limiter.requests.peekFirst().isBefore(cutoff)) {
+                limiter.requests.removeFirst();
             }
-            if (requests.size() >= 30) {
+            if (limiter.requests.size() >= 30) {
                 return false;
             }
-            requests.addLast(Instant.now());
+            limiter.requests.addLast(now);
             return true;
         }
+    }
+
+    private void cleanupRateLimiters(Instant now) {
+        Instant staleBefore = now.minusSeconds(300);
+        rateLimiters.entrySet().removeIf(entry -> {
+            RateLimiterState limiter = entry.getValue();
+            synchronized (limiter) {
+                while (!limiter.requests.isEmpty() && limiter.requests.peekFirst().isBefore(now.minusSeconds(60))) {
+                    limiter.requests.removeFirst();
+                }
+                return limiter.requests.isEmpty() && limiter.lastAccess.isBefore(staleBefore);
+            }
+        });
     }
 
     @PostMapping("/sessions")
@@ -87,5 +113,10 @@ public class ChatController {
             chatService.streamMessage(id, req, userEmail, emitter);
         });
         return emitter;
+    }
+
+    private static class RateLimiterState {
+        private final Deque<Instant> requests = new ArrayDeque<>();
+        private Instant lastAccess = Instant.now();
     }
 }
