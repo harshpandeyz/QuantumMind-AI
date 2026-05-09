@@ -12,6 +12,26 @@ export default defineConfig({
         target: 'http://localhost:8085',
         changeOrigin: true,
         secure: false
+      },
+      '/ai': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false
+      }
+    }
+  },
+
+  build: {
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'ui-vendor': ['lucide-react', 'react-hot-toast'],
+          'markdown-vendor': ['react-markdown', 'remark-gfm'],
+          'chart-vendor': ['recharts'],
+          'state-vendor': ['zustand']
+        }
       }
     }
   }
