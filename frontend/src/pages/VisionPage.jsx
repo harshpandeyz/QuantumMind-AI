@@ -1,10 +1,12 @@
-import { useCallback, useState } from 'react'
+import { Check, Copy, Eye, Image, Sparkles, UploadCloud } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
 import { useDropzone } from 'react-dropzone'
 import toast from 'react-hot-toast'
-import { Image, Upload, Zap } from 'lucide-react'
+import { api } from '../api/auth'
 import Layout from '../components/layout/Layout'
 import Button from '../components/ui/Button'
-import { api } from '../api/auth'
+import Input from '../components/ui/Input'
+import { useGameStore } from '../store/gameStore'
 
 export default function VisionPage() {
   const [file, setFile] = useState(null)
@@ -12,18 +14,25 @@ export default function VisionPage() {
   const [question, setQuestion] = useState('')
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   const onDrop = useCallback((accepted) => {
-    const f = accepted[0]
-    if (!f) return
-    if (!f.type.startsWith('image/')) {
+    const nextFile = accepted[0]
+    if (!nextFile) return
+    if (!nextFile.type.startsWith('image/')) {
       toast.error('Only image files are supported')
       return
     }
-    setFile(f)
-    setPreview(URL.createObjectURL(f))
+    setFile(nextFile)
+    setPreview(URL.createObjectURL(nextFile))
     setResult(null)
   }, [])
+
+  useEffect(() => {
+    return () => {
+      if (preview) URL.revokeObjectURL(preview)
+    }
+  }, [preview])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -46,6 +55,8 @@ export default function VisionPage() {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
       setResult(data)
+      useGameStore.getState().addXP(15)
+      useGameStore.getState().unlockAchievement('vision_run')
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Vision analysis failed')
     } finally {
@@ -53,83 +64,80 @@ export default function VisionPage() {
     }
   }
 
+  const copyAnalysis = async () => {
+    await navigator.clipboard.writeText(result?.description || '')
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
+  }
+
   return (
     <Layout title="Vision AI">
-      <div className="mx-auto max-w-3xl space-y-6">
-        <div
-          {...getRootProps()}
-          className={`grid cursor-pointer place-items-center rounded-xl border-2 border-dashed p-10 text-center transition ${
-            isDragActive
-              ? 'border-cyan-300 bg-cyan-300/10'
-              : 'border-[var(--border)] bg-[var(--bg-secondary)] hover:border-cyan-300'
-          }`}
-        >
-          <input {...getInputProps()} />
-          <Upload className="mx-auto mb-3 h-10 w-10 text-cyan-300" />
-          <p className="font-semibold text-slate-200">
-            {isDragActive ? 'Drop the image here' : 'Drag & drop a quantum circuit image'}
-          </p>
-          <p className="mt-1 text-sm text-slate-400">PNG, JPG, GIF - any image format</p>
-        </div>
+      <div className="mb-6">
+        <h2 className="font-display text-4xl font-bold text-white">Vision AI</h2>
+        <p className="mt-2 text-slate-400">Analyze quantum circuits and diagrams</p>
+      </div>
 
-        {preview && (
-          <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] p-4">
-            <p className="mb-3 flex items-center gap-2 text-sm text-slate-400">
-              <Image className="h-4 w-4" /> Preview
-            </p>
-            <img
-              src={preview}
-              alt="Circuit preview"
-              className="mx-auto max-h-64 rounded-lg object-contain"
-            />
-          </div>
-        )}
-
-        <div className="space-y-3">
-          <input
-            type="text"
-            placeholder="Optional: ask a specific question about this circuit..."
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-            className="w-full rounded-lg border border-[var(--border)] bg-[#071225] px-4 py-2.5 text-sm text-slate-200 placeholder-slate-500 outline-none focus:border-[var(--accent-primary)]"
-          />
-          <Button
-            onClick={analyze}
-            disabled={!file || loading}
-            loading={loading}
-            className="w-full justify-center"
+      <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+        <section className="space-y-5">
+          <div
+            {...getRootProps()}
+            className={`glass cursor-pointer rounded-2xl border border-dashed p-10 text-center transition ${isDragActive ? 'border-brand-blue bg-brand-blue/10 shadow-[var(--shadow-blue)]' : 'border-brand-blue/30 hover:border-brand-blue/60 hover:bg-white/[0.03]'}`}
           >
-            <Zap className="h-4 w-4" />
-            {loading ? 'Analyzing...' : 'Analyze Image'}
-          </Button>
-        </div>
-
-        {result && !loading && (
-          <div className="space-y-4 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-6">
-            <div className="flex items-center gap-2">
-              <Zap className="h-4 w-4 text-cyan-400" />
-              <h3 className="font-semibold text-cyan-200">Analysis Result</h3>
+            <input {...getInputProps()} />
+            <div className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-full bg-gradient-to-br from-brand-blue to-brand-violet">
+              <UploadCloud className="h-8 w-8 text-white" />
             </div>
-            <div className="flex flex-wrap gap-2">
-              <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs text-cyan-300">
-                {result.type === 'quantum_circuit' ? 'Quantum Circuit' : 'Diagram'}
-              </span>
-              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-400">
-                {result.dimensions}
-              </span>
-              {result.model_used && result.model_used !== 'none' && (
-                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-400">
-                  {result.model_used}
-                </span>
-              )}
-            </div>
-            <div className="rounded-lg bg-black/20 p-4">
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-300">
-                {result.description}
-              </p>
-            </div>
+            <h3 className="font-display text-2xl font-bold text-white">Drop an image here</h3>
+            <p className="mt-1 text-slate-400">or click to browse PNG/JPG diagrams</p>
           </div>
-        )}
+
+          {preview && (
+            <div className="glass overflow-hidden rounded-2xl">
+              <div className="flex items-center gap-2 border-b border-white/10 px-4 py-3 text-sm text-slate-300">
+                <Image className="h-4 w-4 text-brand-blue" />
+                <span className="truncate">{file?.name}</span>
+              </div>
+              <img src={preview} alt="Vision preview" className="max-h-80 w-full object-contain p-4" />
+            </div>
+          )}
+
+          <Input placeholder="Ask a specific question (optional)" value={question} onChange={(event) => setQuestion(event.target.value)} />
+          <Button onClick={analyze} disabled={!file || loading} loading={loading} className="w-full">
+            <Sparkles className="h-4 w-4" />
+            Analyze
+          </Button>
+        </section>
+
+        <section className="min-h-[520px]">
+          {!result ? (
+            <div className="glass grid h-full place-items-center rounded-2xl border-dashed text-center text-slate-400">
+              <div>
+                <Eye className="mx-auto mb-4 h-12 w-12 text-brand-violet" />
+                <h3 className="font-display text-2xl font-bold text-white">Analysis will appear here</h3>
+                <p className="mt-2">Upload a circuit or diagram to begin.</p>
+              </div>
+            </div>
+          ) : (
+            <div className="glass-bright fade-up rounded-2xl p-6">
+              <div className="mb-5 flex items-center justify-between gap-4">
+                <h3 className="font-display text-2xl font-bold text-white">Analysis Complete</h3>
+                <span className="badge badge-green"><Check className="h-3 w-3" /> Ready</span>
+              </div>
+              <div className="mb-5 flex flex-wrap gap-2">
+                <span className="badge badge-blue">{result.type === 'quantum_circuit' ? 'Quantum Circuit' : 'Diagram'}</span>
+                {result.dimensions && <span className="badge badge-violet">{result.dimensions}</span>}
+                {result.model_used && result.model_used !== 'none' && <span className="badge badge-amber">{result.model_used}</span>}
+              </div>
+              <div className="border-t border-white/10 pt-5">
+                <p className="whitespace-pre-wrap text-sm leading-7 text-slate-200">{result.description}</p>
+              </div>
+              <Button variant="secondary" onClick={copyAnalysis} className="mt-6">
+                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                {copied ? 'Copied' : 'Copy Analysis'}
+              </Button>
+            </div>
+          )}
+        </section>
       </div>
     </Layout>
   )
