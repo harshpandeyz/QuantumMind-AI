@@ -1,6 +1,6 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { Eye, EyeOff, Sparkles } from 'lucide-react'
 import { useState } from 'react'
-import { Atom } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import { useAuth } from '../hooks/useAuth'
@@ -9,31 +9,46 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const { login, isLoading } = useAuth()
   const [form, setForm] = useState({ email: '', password: '' })
+  const [showPassword, setShowPassword] = useState(false)
+  const [error, setError] = useState('')
+
   const submit = async (event) => {
     event.preventDefault()
+    setError('')
     try {
       await login(form)
       navigate('/dashboard')
-    } catch {
-      // toast is already shown by the store
+    } catch (err) {
+      setError(err.response?.data?.message || 'Sign in failed')
     }
   }
+
   return (
-    <main className="quantum-grid grid min-h-screen place-items-center p-6">
-      <form onSubmit={submit} className="glass w-full max-w-md rounded-lg p-7">
-        <div className="mb-6 flex items-center gap-3">
-          <Atom className="h-8 w-8 text-cyan-300" />
-          <div>
-            <h1 className="text-2xl font-bold">QuantumMind AI</h1>
-            <p className="text-sm text-slate-400">Sign in to your research intelligence workspace</p>
+    <main className="aurora-bg grid min-h-screen place-items-center p-6">
+      <form onSubmit={submit} className="glass-bright fade-up w-full max-w-md rounded-2xl p-10">
+        <div className="mb-8 text-center">
+          <div className="mx-auto mb-5 grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-brand-blue to-brand-violet shadow-[var(--shadow-blue)]">
+            <Sparkles className="h-7 w-7 text-white" />
           </div>
+          <h1 className="font-display text-3xl font-bold text-white">Welcome back</h1>
+          <p className="mt-2 text-sm text-[var(--text-2)]">Sign in to your AI research workspace</p>
         </div>
+
         <div className="space-y-4">
-          <Input type="email" placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
-          <Input type="password" placeholder="Password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required />
+          <Input label="Email" type="email" placeholder="you@quantummind.ai" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} required />
+          <div className="relative">
+            <Input label="Password" type={showPassword ? 'text' : 'password'} placeholder="Enter your password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} required />
+            <button type="button" onClick={() => setShowPassword((value) => !value)} className="absolute bottom-3 right-3 text-slate-400 hover:text-white">
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
+          {error && <div className="badge badge-pink fade-up w-full justify-center">{error}</div>}
           <Button loading={isLoading} className="w-full" type="submit">Sign In</Button>
         </div>
-        <p className="mt-5 text-center text-sm text-slate-400">New here? <Link className="text-cyan-300" to="/register">Create an account</Link></p>
+
+        <p className="mt-6 text-center text-sm text-slate-400">
+          Don't have an account? <Link className="font-semibold text-brand-blue hover:text-brand-violet" to="/register">Register</Link>
+        </p>
       </form>
     </main>
   )
