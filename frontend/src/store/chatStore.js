@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { createSessionApi, listMessagesApi, listSessionsApi, sendMessageApi } from '../api/chat'
+import { useGameStore } from './gameStore'
 
 export const useChatStore = create((set, get) => ({
   sessions: [],
@@ -21,10 +22,19 @@ export const useChatStore = create((set, get) => ({
     const userMessage = { id: crypto.randomUUID(), role: 'user', content: payload.message, createdAt: new Date().toISOString() }
     set({ messages: [...get().messages, userMessage], isTyping: true })
     try {
-      const response = await sendMessageApi(sessionId, payload)
-      const aiMessage = { id: response.messageId, role: 'assistant', content: response.response, createdAt: response.createdAt }
-      set({ messages: [...get().messages, aiMessage], isTyping: false })
+      await sendMessageApi(sessionId, payload)
+      await get().loadMessages(sessionId)
+      set({ isTyping: false })
       await get().loadSessions()
+      const sessions = get().sessions
+      useGameStore.getState().addXP(10)
+      useGameStore.getState().unlockAchievement('first_chat')
+      if (payload.useRag) {
+        const ragCount = Number(localStorage.getItem('qm_rag_count') || '0') + 1
+        localStorage.setItem('qm_rag_count', String(ragCount))
+        if (ragCount >= 10) useGameStore.getState().unlockAchievement('rag_master')
+      }
+      if (sessions.length >= 10) useGameStore.getState().unlockAchievement('sessions_10')
       return sessionId
     } catch (error) {
       set({ isTyping: false })
