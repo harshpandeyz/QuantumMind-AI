@@ -19,6 +19,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -36,7 +37,9 @@ public class AIProxyService {
 
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
-    private final HttpClient httpClient = HttpClient.newBuilder().build();
+    private final HttpClient httpClient = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(10))
+            .build();
 
     @SuppressWarnings("unchecked")
     public Map<String, Object> chat(UUID sessionId, String message, List<UUID> documentIds, boolean useRag, String userId) {
@@ -80,6 +83,7 @@ public class AIProxyService {
             );
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(aiServiceUrl + "/chat/stream"))
+                    .timeout(Duration.ofSeconds(120))
                     .header("Content-Type", MediaType.APPLICATION_JSON_VALUE)
                     .header("X-User-Id", userId)
                     .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(body)))
