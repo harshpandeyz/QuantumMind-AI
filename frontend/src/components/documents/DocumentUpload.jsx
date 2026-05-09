@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react'
 import { useDropzone } from 'react-dropzone'
 import toast from 'react-hot-toast'
 import { uploadDocumentApi } from '../../api/documents'
+import { useGameStore } from '../../store/gameStore'
 import { prettyBytes } from '../../utils/helpers'
 
 export default function DocumentUpload({ onUploaded }) {
@@ -24,6 +25,12 @@ export default function DocumentUpload({ onUploaded }) {
           setUploads((items) => items.map((item) => item.name === file.name ? { ...item, progress } : item))
         })
         toast.success(`${file.name} uploaded`)
+        const game = useGameStore.getState()
+        game.addXP(20)
+        game.unlockAchievement('first_doc')
+        const uploadCount = Number(localStorage.getItem('qm_doc_upload_count') || '0') + 1
+        localStorage.setItem('qm_doc_upload_count', String(uploadCount))
+        if (uploadCount >= 5) game.unlockAchievement('docs_5')
         onUploaded()
       } catch (error) {
         toast.error(error.response?.data?.message || `Upload failed for ${file.name}`)
